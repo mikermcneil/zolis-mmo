@@ -1,4 +1,10 @@
 {
+  "paths": {
+    "public": "client"
+  },
+  "hooks":{
+    "grunt": false
+  },
   "generators": {
     "modules": {}
   }
