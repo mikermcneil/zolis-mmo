@@ -1,10 +1,88 @@
+
+
+var Cloud = {
+
+  // •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• ••
+  // Outbound API (communicate w/ endpoints on server)
+  // •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• ••
+
+
+  keydown: function (keycode){
+    io.socket._raw.emit('keydown', keycode);
+  },
+
+  keyup: function (keycode){
+    io.socket._raw.emit('keyup', keycode);
+  },
+
+  chat: function (msg){
+    io.socket._raw.emit('chat', msg);
+  },
+
+  join: function (name){
+    io.socket._raw.emit('join', name);
+  },
+
+
+
+  // •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• ••
+  // Inbound API (listen for events server might send)
+  // •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• •• ••
+
+  when: {
+
+    taken: function (event){
+      return taken(event);
+    },
+
+    name: function (event){
+      return onName(event);
+    },
+
+    highScores: function (event){
+      return onHighScores(event);
+    },
+
+    setState: function (event){
+      return setState(event);
+    },
+
+    dead: function (event){
+      return drawInstructions(event);
+    },
+
+    message: function (event){
+      return mergeDiff(event);
+    },
+
+    chat: function (event){
+      return onChat(event);
+    },
+
+    alert: function (event){
+      return onAlert(event);
+    },
+  }
+};
+
+
+
+// Listen for inbound messages from Sails
+for (var eventName in Cloud.when){
+  io.socket.on(eventName, Cloud.when[eventName]);
+}
+
+
+
+/**
+ * Original game code starts here
+ * (w/ as few modifications as possible)
+ */
+
 var $ = document.querySelector.bind(document);
 var name;
 var arena;
 
-
-// Use the auto-connecting socket in Sails
-var socket = io.socket;
 
 canvas = $('#c')
 canvas.width = 800
@@ -22,21 +100,35 @@ ctx.scale(4, 4)
 //ctx.scale(2,2)
 ctx.font = '3px sans-serif'
 
-socket.on('taken', taken)
+// **REMOVED**
+// io.socket.on('taken', taken)
+
 // on id, set id for user tracking purposes
-socket.on('name', function (n) {
-  name = n
-  hideInstructions()
-})
+function onName (n) {
+  name = n;
+  hideInstructions();
+}
+
+// **REMOVED**
+// io.socket.on('name', )
 // on death, draw instructios
-socket.on('dead', drawInstructions)
+// **REMOVED**
+// io.socket.on('dead', drawInstructions)
+
 // on game data, display on canvas
-socket.on('setState', setState)
-socket.on('message', mergeDiff)
+
+// **REMOVED**
+// io.socket.on('setState', setState)
+// **REMOVED**
+// io.socket.on('message', mergeDiff)
 // on item diff data, update item list
 
 var alerts = []
-socket.on('highScores', function (scores) {
+
+// **REMOVED**
+// io.socket.on('highScores', onHighScores);
+
+function onHighScores (scores) {
   var $s = $('#scores')
   $s.innerHTML = '<h3>Top 10</h3>'
 
@@ -45,12 +137,17 @@ socket.on('highScores', function (scores) {
     var len = (scores[i].name + scores[i].score).length
     $s.innerHTML += '<h5>' + scores[i].name + repeat('&nbsp;', 22 - len) + scores[i].score + '</h5>'
   }
-});
+}
 
 function repeat(s, n) {
   return new Array(n + 1).join(s)
 }
-socket.on('alert', function alert(msg) {
+
+// **REMOVED**
+// io.socket.on('alert', )
+
+
+function onAlert(msg) {
   // split alert string into many msgs
   while (msg) {
     var m = msg.substr(0, 27)
@@ -60,24 +157,30 @@ socket.on('alert', function alert(msg) {
       time: 200
     })
   }
-})
+}
 
-socket.on('chat', function (msg) {
+  // **REMOVED**
+// io.socket.on('chat', )
+//
+function onChat(msg) {
   var c = $('#chatBox')
   c.innerHTML = c.innerHTML.replace(/<br>/g, '\n')
   c.textContent += msg + '\n'
   c.innerHTML = c.innerHTML.replace(/\n/g, '<br>')
   c.scrollTop = 10e5
-})
+}
+
 var instructionsVisible = true
 // on keypress, send command to server
 // left, up, right, down, space, z
 var keys = [37, 38, 39, 40, 32, 90]
 window.onkeydown = function (e) {
-  keys.indexOf(e.which) != -1 && socket._raw.emit('keydown', e.which)
+  // keys.indexOf(e.which) != -1 && io.socket._raw.emit('keydown', e.which)
+  keys.indexOf(e.which) != -1 && Cloud.keydown(e.which);
 }
 window.onkeyup = function (e) {
-  keys.slice(0, 4).indexOf(e.which) != -1 && socket._raw.emit('keyup', e.which)
+  // keys.slice(0, 4).indexOf(e.which) != -1 && io.socket._raw.emit('keyup', e.which)
+  keys.slice(0, 4).indexOf(e.which) != -1 && Cloud.keyup(e.which);
 }
 
 // start by drawing instructions (+ name inputs over canvas?)
@@ -98,6 +201,12 @@ function hideInstructions() {
   }
 }
 
+function taken(res){
+  $('#red').style.visibility = 'visible';
+  $('#name').style.borderColor = '#C0392B';
+  $('#taken').innerText = res.name + ' is ' + (res.dead ? 'dead' : 'taken');
+}
+
 function initialize() {
   $('#join').onsubmit = join
   $('#chatInput').onsubmit = chat
@@ -115,7 +224,8 @@ function chat(e) {
   e.preventDefault()
   var msg = $('#msg').value
   $('#msg').value = ''
-  socket._raw.emit('chat', msg)
+  // io.socket._raw.emit('chat', msg)
+  Cloud.chat(msg);
 }
 
 function join(e) {
@@ -123,16 +233,11 @@ function join(e) {
   var name = $('#name').value
   if (/^[a-zA-Z]+$/.test(name)) {
     console.log('joining as', name)
-    socket._raw.emit('join', name)
+    // io.socket._raw.emit('join', name)
+    Cloud.join(name);
     return
   }
   badName(name)
-}
-
-function taken(res) {
-  $('#red').style.visibility = 'visible'
-  $('#name').style.borderColor = '#C0392B'
-  $('#taken').innerText = res.name + ' is ' + (res.dead ? 'dead' : 'taken')
 }
 
 function badName(name) {
