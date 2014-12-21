@@ -1,19 +1,22 @@
 {
-  "name": "senshi",
-  "version": "0.1.0",
-  "description": "Fight to the death",
+  "name": "sails-senshi",
+  "version": "0.0.0",
+  "description": "Fight to the death...on sails",
   "main": "app.js",
   "dependencies": {
     "sails": "~0.11.0"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/Zolmeister/senshi.git"
+    "url": "git://github.com/mikermcneil/zolis-mmo.git"
   },
   "keywords": [
     "Fighting",
     "game"
   ],
   "author": "Zolmeister",
+  "contributors":[
+    "mikermcneil"
+  ],
   "license": "MIT"
 }
