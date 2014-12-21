@@ -3,9 +3,9 @@ var fs = require('fs')
 var files = {
   'main': fs.readFileSync('main.js'),
   'player': fs.readFileSync('player.png'),
-  //'libs': fs.readFileSync('libs.js'),
-  //'audio.js': fs.readFileSync('audio.js'),
-  //'audio.html': fs.readFileSync('audio.html'),
+  'libs': fs.readFileSync('libs.js'),
+  'audio.js': fs.readFileSync('audio.js'),
+  'audio.html': fs.readFileSync('audio.html'),
   '': fs.readFileSync('index.html')
 }
 
