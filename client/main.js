@@ -1,6 +1,10 @@
-var socket = io.connect(),
-  $ = document.querySelector.bind(document),
-  name, arena;
+var $ = document.querySelector.bind(document);
+var name;
+var arena;
+
+
+// Use the auto-connecting socket in Sails
+var socket = io.socket;
 
 canvas = $('#c')
 canvas.width = 800
@@ -70,10 +74,10 @@ var instructionsVisible = true
 // left, up, right, down, space, z
 var keys = [37, 38, 39, 40, 32, 90]
 window.onkeydown = function (e) {
-  keys.indexOf(e.which) != -1 && socket.emit('keydown', e.which)
+  keys.indexOf(e.which) != -1 && socket._raw.emit('keydown', e.which)
 }
 window.onkeyup = function (e) {
-  keys.slice(0, 4).indexOf(e.which) != -1 && socket.emit('keyup', e.which)
+  keys.slice(0, 4).indexOf(e.which) != -1 && socket._raw.emit('keyup', e.which)
 }
 
 // start by drawing instructions (+ name inputs over canvas?)
@@ -111,7 +115,7 @@ function chat(e) {
   e.preventDefault()
   var msg = $('#msg').value
   $('#msg').value = ''
-  socket.emit('chat', msg)
+  socket._raw.emit('chat', msg)
 }
 
 function join(e) {
@@ -119,7 +123,7 @@ function join(e) {
   var name = $('#name').value
   if (/^[a-zA-Z]+$/.test(name)) {
     console.log('joining as', name)
-    socket.emit('join', name)
+    socket._raw.emit('join', name)
     return
   }
   badName(name)
@@ -237,13 +241,13 @@ var map = (function generateMap() {
 function drawTerrain(offsetX, offsetY) {
   for (var y = -canvas.height / 2 - 6 * 14; y < canvas.height / 2 + 6 * 14; y += 14) {
     for (var x = -canvas.width / 2 - 8 * 14; x < canvas.width / 2 + 8 * 14; x += 14) {
-      
+
       var row;
       var col = image.width - 2 * 14
-      
+
       var xx = (x + canvas.width / 2) / 14
       var yy = (y + canvas.height / 2) / 14
-      
+
       if(map[yy] && typeof map[yy][xx] !='undefined'){
         row = map[yy][xx]
       } else {
@@ -257,13 +261,13 @@ function drawTerrain(offsetX, offsetY) {
       }
 
       if (x - offsetX + 14 < -canvas.width / 4 / 2 || y - offsetY + 14 < -canvas.height / 4 / 2 || x - offsetX > canvas.width / 4 / 2 || y - offsetY > canvas.height / 4 / 2) continue
-      
+
       // draw edges
       // top
       col-=14
       // translation x, y, rot, row
       var t = [0, 0, 0, row]
-      
+
       ctx.save()
       if(yy == -1 && xx>=0 && xx<map[0].length) {
         t =[1, 1, -1, 0]
@@ -279,7 +283,7 @@ function drawTerrain(offsetX, offsetY) {
       //right
       else if(xx == map[0].length && yy>=0 && yy<map.length) {
         t = [0, 1, -.5, 0]
-      } 
+      }
       // top left
       else if(xx==-1 && yy==-1) {
         t = [1, 0, .5, 1]
@@ -300,13 +304,13 @@ function drawTerrain(offsetX, offsetY) {
       else {
         col+=14
       }
-      
+
       row = t[3]
       ctx.translate(x-offsetX+14*t[0], y-offsetY+14*t[1])
       ctx.rotate(t[2]*Math.PI)
       ctx.drawImage(image, col, row * 14, 14, 14, 0, 0, 14, 14)
       ctx.restore()
-     
+
     }
   }
 }
@@ -333,7 +337,7 @@ function drawBullets(offsetX, offsetY) {
     if (bullet.t == 0) {
       ctx.save()
       ctx.translate(bullet.x - offsetX + 7, bullet.y - offsetY + 7)
-      // left, up/left, up, up/right, right, down/right, down, down/left 
+      // left, up/left, up, up/right, right, down/right, down, down/left
       // 0,    1,       2,  3,        4,     5,          6,    7
       var rotate = [1, -.75, -.5, -.25, 0, .25, .5, .75]
       ctx.rotate(rotate[bullet.d] * Math.PI)
@@ -385,10 +389,10 @@ function drawPlayer(x, y, name, health, dir, frame, weapon, kills) {
   //ctx.fillStyle = '#fff'
   //ctx.fillRect(x,y,22,20)
   var tanAngle = Math.tan(Math.PI / 4)
-  
+
   //draw character
   ctx.translate(x+11,y+10)
-  
+
   if (dir%2==1) {
     if(dir==1 || dir==7)
     ctx.setTransform(3.8, (dir == 1 || dir == 5 ? -1 : 1) * tanAngle, 0, 4, 400-x*4+22*4+11*4, 300+y*4+10*4)
@@ -418,7 +422,7 @@ function mergeDiff(diff) {
   for(var i=0;i<9;i++){
     if(!diff[i]) diff[i]=[]
   }
-  
+
   // players
   for (var i = 0; i < diff[0].length; i++) {
     arena.players.push(diff[0][i])
