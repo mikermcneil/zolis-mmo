@@ -84,9 +84,6 @@ function setupGame(io, done){
 
 
 
-      // Build `physics` fn.
-      // TODO: improve strategy
-      var physics = ToPhysics(arena);
 
 
       //////////////////////////////////////////////////////////////////////////////
@@ -94,24 +91,36 @@ function setupGame(io, done){
       //////////////////////////////////////////////////////////////////////////////
       var frame = 0;
       setInterval(function () {
-        // update game state
-        var diff = physics(++frame);
 
-        // don't send if empty
-        if (!diff.reduce(function (total, x) {
-          return total + x.length;
-        }, 0)) return;
+        // Load arena
+        Map.find().limit(1).populate('players').exec(function (err, maps) {
+          if (err) {
+            sails.log.error('Error loading arena for newly connected socket:',err);
+            return;
+          }
+          // Build `physics` fn.
+          // TODO: improve strategy
+          var physics = ToPhysics(Map.serialize(maps[0]));
 
-        //console.log(diff)
-        // send game state data
+          // update game state
+          var diff = physics(++frame);
 
-        var found = false;
-        var i = diff.length - 1;
-        while (diff[i] && diff[i].length === 0) {
-          diff.splice(i, 1);
-        }
+          // don't send if empty
+          if (!diff.reduce(function (total, x) {
+            return total + x.length;
+          }, 0)) return;
 
-        io.sockets.emit('message', diff);
+          //console.log(diff)
+          // send game state data
+
+          var found = false;
+          var i = diff.length - 1;
+          while (diff[i] && diff[i].length === 0) {
+            diff.splice(i, 1);
+          }
+
+          io.sockets.emit('message', diff);
+        });
       }, 1000 / 30);
 
 
