@@ -144,6 +144,12 @@ module.exports.routes = {
         }
 
 
+        console.log('\n\n\n****** CREATING PLAYER ******');
+        console.log('\n\n\n****** CREATING PLAYER ******');
+        console.log('\n\n\n****** CREATING PLAYER ******');
+        console.log('\n\n\n****** CREATING PLAYER ******');
+        console.log('\n\n\n****** CREATING PLAYER ******');
+        console.log('\n\n\n****** CREATING PLAYER ******');
         Player.create({
           name: name,
           x: x,

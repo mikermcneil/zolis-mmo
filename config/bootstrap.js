@@ -119,10 +119,34 @@ function setupGame(io, done){
             diff.splice(i, 1);
           }
 
-          io.sockets.emit('message', diff);
+          // Persist new diff
+          maps[0].diff = diff;
+          maps[0].save(function (err){
+            if (err) {
+              sails.log.error('Failed to save diff:',err);
+              return;
+            }
+
+            // Persist new players
+            async.each(maps[0].players, function (player, next){
+              console.log('saving plyer id#%s',player.id);
+              player.save(next);
+            }, function (err){
+              if (err) {
+                sails.log.error('Failed to save new player state:',err);
+                return;
+              }
+
+              // console.log('emitting dif', diff);
+              // Send new diff down to client
+              io.sockets.emit('message', diff);
+            });
+
+          });
+
         });
-      }, 1000 / 30);
-      // }, 1000 / 3);
+      // }, 1000 / 30);
+      }, 1000 / 20);
 
 
 
@@ -302,12 +326,14 @@ function setupGame(io, done){
           if (frame % 6 == 0) {
             player.frame = (player.frame + 1) % 4;
           }
+          console.log('updating player pos. adding %d to x and %d to y', keymap[key][0], keymap[key][1]);
           player.x += keymap[key][0];
           player.y += keymap[key][1];
           var outsideMap = player.x < -400 || player.x > (400 - 16) || player.y < -300 || player.y > (300 - 18);
           var collidePlayer = CollisionService.hasCollision(player, players.slice(0, i).concat(players.slice(i + 1)));
           var collideTerrain = CollisionService.hasTerrainCollision(arena.tiles, player.x, player.y);
           if (outsideMap || collidePlayer || collideTerrain) {
+            console.log('\n\n***********\nCOLLISION!');
             player.x -= keymap[key][0];
             player.y -= keymap[key][1];
           }
@@ -425,6 +451,8 @@ function setupGame(io, done){
       // items
       var iDiffs = differ(items, arenaClone.items);
 
+      console.log('players:', _.map(players, function (player){ return Player.serialize(player); }));
+      console.log('clonedPlayers:', _.map(arenaClone.players, function (player){ return Player.serialize(player); }));
       console.log('playerdiff:', pDiffs);
 
       diff[2] = pDiffs;

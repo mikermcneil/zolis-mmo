@@ -1,5 +1,5 @@
 module.exports.connections = {
-  // 'ram': {
-  //   adapter: 'sails-disk'
-  // }
+  'ram': {
+    adapter: 'sails-memory'
+  }
 };
