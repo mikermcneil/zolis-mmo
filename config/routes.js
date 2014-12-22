@@ -16,7 +16,9 @@ module.exports.routes = {
     //
 
 
+
     var key = req.param('keycode');
+    console.log('keydown: %s',key);
 
     // Attack
     if (key == 32 || key == 90) {
@@ -67,6 +69,7 @@ module.exports.routes = {
   'POST /me/keyup': function (req, res) {
 
     var key = req.param('keycode');
+    console.log('keyup: %s',key);
 
     Player.findOne(req.session.me).exec(function (err, player){
       if (err) return res.negotiate(err);

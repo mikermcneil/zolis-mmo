@@ -100,7 +100,7 @@ function setupGame(io, done){
           }
           // Build `physics` fn.
           // TODO: improve strategy
-          var physics = ToPhysics(Map.serialize(maps[0]));
+          var physics = ToPhysics(maps[0]);
 
           // update game state
           var diff = physics(++frame);
@@ -122,6 +122,7 @@ function setupGame(io, done){
           io.sockets.emit('message', diff);
         });
       }, 1000 / 30);
+      // }, 1000 / 3);
 
 
 
@@ -183,6 +184,10 @@ function setupGame(io, done){
       var cloned = clone[i];
       for (var key in obj) {
         if (key == 'k') continue;
+        if (key == 'keys') continue;
+        if (key == 'id') continue;
+        if (typeof obj[key] === 'object') continue;
+        if (typeof obj[key] === 'function') continue;
         if (obj[key] != cloned[key]) update[key] = +obj[key].toFixed(2);
       }
       if (Object.keys(update).length > 1) diffs.push(update);
@@ -196,7 +201,13 @@ function setupGame(io, done){
 
   function ToPhysics(arena) {
 
-    var diff = Map.serialize(arena.diff);
+
+    var diff = arena.diff;
+    delete arena.diff;
+
+    // diff = Array.apply([], new Array(9)).map(function () {
+    //   return [];
+    // });
 
     /**
      * [physics description]
@@ -225,6 +236,13 @@ function setupGame(io, done){
       // player movement
       for (var i = 0; i < players.length; i++) {
         var player = players[i];
+        // if (!player.keys) {
+        //   console.log('player.keys', player.keys);
+        //   console.log('player.k', player.k);
+        // }
+        // console.log('handling player movement:');
+        // console.log('  •-> player.keys[0] ::',player.keys[0]);
+        // console.log('  •-> player.keys[1] ::',player.keys[1]);
         var key;
         var key1 = (player.keys[0] || -1) - 37;
         var key2 = (player.keys[1] || -1) - 37;
@@ -307,12 +325,12 @@ function setupGame(io, done){
         var player = CollisionService.hasCollision(bullet, players);
         if (player && bullet.n != player.name) {
           // arrow does 10 dmg, bullet does 20
-          player.h -= (bullet.t == 0) ? 10 : 20;
-          if (player.h <= 0) {
+          player.health -= (bullet.t == 0) ? 10 : 20;
+          if (player.health <= 0) {
             var id = bullet.n;
             for (var i = 0; i < players.length; i++) {
-              if (players[i].n == id) {
-                players[i].s++;
+              if (players[i].name == id) {
+                players[i].kills++;
                 break;
               }
             }
@@ -361,7 +379,7 @@ function setupGame(io, done){
       // player deaths
       for (var i = players.length - 1; i >= 0; i--) {
         var player = players[i];
-        if (player.h <= 0) {
+        if (player.health <= 0) {
           // drop weapon
           if (player.weapon != -1) {
             var item = {
@@ -406,6 +424,8 @@ function setupGame(io, done){
       var bDiffs = differ(bullets, arenaClone.bullets);
       // items
       var iDiffs = differ(items, arenaClone.items);
+
+      console.log('playerdiff:', pDiffs);
 
       diff[2] = pDiffs;
       diff[5] = bDiffs;
