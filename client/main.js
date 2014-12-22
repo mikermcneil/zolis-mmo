@@ -70,6 +70,7 @@ var Cloud = {
     },
 
     setState: function (event){
+      console.log('GOT STATE',event);
       return setState(event);
     },
 

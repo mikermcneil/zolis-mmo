@@ -13,17 +13,7 @@ function setupGame(io, done){
 
   // State
 
-  // list of taken names
-  var taken = [];
-  var dead = [];
-
   var highScores = [];
-
-  var arena = {
-    players: [],
-    bullets: [],
-    items: undefined
-  };
 
   // stub 10 high scores
   for (var i = 0; i < 10; i++) {
@@ -37,9 +27,17 @@ function setupGame(io, done){
   io.on('connection', function (socket){
     var  p;
 
-    // on socket connect, start streaming game data to them
-    socket.emit('highScores', highScores.slice(0, 10));
-    socket.emit('setState', arena);
+    // Load arena
+    Map.find().limit(1).populate('players').exec(function (err, maps) {
+      if (err) {
+        sails.log.error('Error loading arena for newly connected socket:',err);
+        return;
+      }
+
+      // on socket connect, start streaming game data to them
+      socket.emit('highScores', highScores.slice(0, 10));
+      socket.emit('setState', maps[0]);
+    });
 
 
     // on socket disconnect, kill them
@@ -381,7 +379,7 @@ function setupGame(io, done){
           io.sockets.emit('highScores', highScores.slice(0, 10))
 
           taken.splice(taken.indexOf(player.n), 1)
-          dead.push(player.n)
+          player.isDead = true;
           players.splice(i, 1)
           diff[1].push(i)
           arenaClone.players.splice(i, 1)
