@@ -419,7 +419,7 @@ function setupGame(io, done){
 
       // calculate update diffs
       // players
-      var pDiffs = differ(players, arenaClone.players);
+      var pDiffs = differ(_.map(players, function (player){ return Player.serialize(player); }), _.map(arenaClone.players, function (player){ return Player.serialize(player); }));
       // bullets
       var bDiffs = differ(bullets, arenaClone.bullets);
       // items
