@@ -95,8 +95,9 @@ module.exports.routes = {
           }
 
           // Add player to map
+          // console.log('\n\n\n\n\n***********\nPERSISTING PLAYER:', Player.serialize(newPlayer));
           maps[0].players.add(newPlayer.id);
-          maps[0].diff[0].push(newPlayer);
+          maps[0].diff[0].push(Player.serialize(newPlayer));
           maps[0].save(function (err){
             if (err) return res.negotiate(err);
             return res.send(200, name);

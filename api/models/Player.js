@@ -6,7 +6,37 @@
 */
 module.exports = {
 
-  connection: 'ram',
+  serialize: function (player){
+    var data = {};
+     // name
+    data.n = player.n || player.name;
+    data.x = player.x;
+    data.y = player.y;
+
+    // health
+    data.h = player.h || player.health;
+
+    // kills
+    data.s = player.s || player.kills;
+
+    // weapons: fists, machete, bow, gun - [-1, 0, 1, 2]
+    data.w = player.w || player.weapon;
+
+    // directions:
+    // left, up/left, up, up/right, right, right/down, down, down/left
+    // 0,    1,       2,  3,        4,     5,          6,     7
+    data.d = player.d || player.direction;
+
+    // animation frame
+    data.f = player.f || player.frame;
+
+    // keys
+    data.k = player.k || player.keys;
+
+    // attacking - bool
+    data.a = player.a || player.attacking;
+    return data;
+  },
 
   attributes: {
 
@@ -38,14 +68,16 @@ module.exports = {
     // directions:
     // left, up/left, up, up/right, right, right/down, down, down/left
     // 0,    1,       2,  3,        4,     5,          6,     7
-    directions: {
+    direction: {
       type: 'integer',
       defaultsTo: 6
     },
 
     // weapons: fists, machete, bow, gun - [-1, 0, 1, 2]
-    weapons: {
-      type: 'array'
+    weapon: {
+      type: 'integer',
+      enum: [-1, 0, 1, 2],
+      defaultsTo: -1
     },
 
     // animation frame

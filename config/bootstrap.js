@@ -24,64 +24,64 @@ function setupGame(io, done){
   }
 
 
-  io.on('connection', function (socket){
-    var  p;
-
-    // Load arena
-    Map.find().limit(1).populate('players').exec(function (err, maps) {
-      if (err) {
-        sails.log.error('Error loading arena for newly connected socket:',err);
-        return;
-      }
-
-      // on socket connect, start streaming game data to them
-      socket.emit('highScores', highScores.slice(0, 10));
-      socket.emit('setState', maps[0]);
-    });
-
-
-    // on socket disconnect, kill them
-    socket.on('disconnect', function() {
-      if (p) p.h = 0;
-    });
-
-    // on socket command (movement/attack), update game state
-    socket.on('keydown', function(key) {
-      if (!p) return;
-
-      if (key == 32 || key == 90) {
-        p.a = 1;
-        return p.a;
-      }
-      if (key > 36 && key < 41) {
-
-        // remove key if was in list before
-        if (p.k.indexOf(key) != -1) p.k.splice(p.k.indexOf(key), 1);
-
-        // set key to first position
-        p.k.unshift(key);
-      }
-    });
-    socket.on('keyup', function(key) {
-      if (!p) return;
-      p.k.splice(p.k.indexOf(key), 1);
-    });
-
-    // chat
-    socket.on('chat', function(msg) {
-      io.sockets.emit('chat', (p && p.n || '☠') + ': ' + msg);
-    });
-  });
-
-
-
-
   sails.machines.createMap().exec({
 
     error: function (err){
       return done(err);
     },
     then: function (arena){
+
+      io.on('connection', function (socket){
+        var  p;
+
+        // Load arena
+        Map.find().limit(1).populate('players').exec(function (err, maps) {
+          if (err) {
+            sails.log.error('Error loading arena for newly connected socket:',err);
+            return;
+          }
+
+          // on socket connect, start streaming game data to them
+          socket.emit('highScores', highScores.slice(0, 10));
+
+          console.log('\n\n\n\n\n*****EMITTING ITEMS: ',Map.serialize(maps[0]).items);
+          socket.emit('setState', Map.serialize(maps[0]));
+        });
+
+
+        // on socket disconnect, kill them
+        socket.on('disconnect', function() {
+          if (p) p.h = 0;
+        });
+
+        // on socket command (movement/attack), update game state
+        socket.on('keydown', function(key) {
+          if (!p) return;
+
+          if (key == 32 || key == 90) {
+            p.a = 1;
+            return p.a;
+          }
+          if (key > 36 && key < 41) {
+
+            // remove key if was in list before
+            if (p.k.indexOf(key) != -1) p.k.splice(p.k.indexOf(key), 1);
+
+            // set key to first position
+            p.k.unshift(key);
+          }
+        });
+        socket.on('keyup', function(key) {
+          if (!p) return;
+          p.k.splice(p.k.indexOf(key), 1);
+        });
+
+        // chat
+        socket.on('chat', function(msg) {
+          io.sockets.emit('chat', (p && p.n || '☠') + ': ' + msg);
+        });
+      });
+
 
 
       // Build `physics` fn.
@@ -187,7 +187,7 @@ function setupGame(io, done){
 
   function ToPhysics(arena) {
 
-    var diff = arena.diff;
+    var diff = Map.serialize(arena.diff);
 
     /**
      * [physics description]

@@ -7,10 +7,25 @@
 
 module.exports = {
 
+  serialize: function (record){
+    var data = _.cloneDeep(record);
+    data.players = (function (players){
+      return _.reduce(players, function (memo, player){
+        memo.push(Player.serialize(player));
+        return memo;
+      }, []);
+    })(data.players);
+    // console.log(data);
+    return data;
+  },
+
+
   attributes: {
 
+
+
     tiles: {
-      type: 'array'
+      type: 'json'
       // e.g.
       /*
       [
@@ -35,7 +50,7 @@ module.exports = {
 
 
     items: {
-      type: 'array'
+      type: 'json'
       // e.g.
       /*
         [
@@ -50,7 +65,7 @@ module.exports = {
     },
 
     diff: {
-      type: 'array',
+      type: 'json',
       // e.g.
       /*
         [
@@ -66,7 +81,7 @@ module.exports = {
     },
 
     bullets: {
-      type: 'array',
+      type: 'json',
       // TODO: prbly use an association
     }
 

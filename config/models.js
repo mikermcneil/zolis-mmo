@@ -1,3 +1,4 @@
 module.exports.models = {
-  migrate: 'drop'
+  migrate: 'drop',
+  connection: 'localDiskDb'
 };

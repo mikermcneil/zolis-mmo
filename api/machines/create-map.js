@@ -30,7 +30,6 @@ module.exports = {
               return [];
             });
           })(),
-          players: [],
           bullets: []
         }).exec(function (err, newMap) {
           if (err) {
