@@ -9,18 +9,42 @@ var Cloud = {
 
   keydown: function (keycode){
     io.socket._raw.emit('keydown', keycode);
+
+    // io.socket.post('/me/keydown', {
+    //   keycode: keycode
+    // });
   },
 
   keyup: function (keycode){
     io.socket._raw.emit('keyup', keycode);
+
+    // io.socket.post('/me/keyup', {
+    //   keycode: keycode
+    // });
   },
 
   chat: function (msg){
     io.socket._raw.emit('chat', msg);
+
+    // io.socket.post('/game/chat', {
+    //   message: msg
+    // });
   },
 
   join: function (name){
-    io.socket._raw.emit('join', name);
+    // io.socket._raw.emit('join', name);
+
+    io.socket.put('/game', {
+      name: name
+    }, function (data, jwr){
+      if (jwr.error) {
+        // console.error('ERROR:',data);
+        return taken(data);
+      }
+
+      // console.log(data);
+      return onName(data);
+    });
   },
 
 
@@ -31,13 +55,15 @@ var Cloud = {
 
   when: {
 
-    taken: function (event){
-      return taken(event);
-    },
+    // No longer used:
 
-    name: function (event){
-      return onName(event);
-    },
+    // taken: function (event){
+    //   return taken(event);
+    // },
+
+    // name: function (event){
+    //   return onName(event);
+    // },
 
     highScores: function (event){
       return onHighScores(event);
