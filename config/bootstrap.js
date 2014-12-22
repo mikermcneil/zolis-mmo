@@ -54,27 +54,27 @@ function setupGame(io, done){
           if (p) p.h = 0;
         });
 
-        // on socket command (movement/attack), update game state
-        socket.on('keydown', function(key) {
-          if (!p) return;
+        // // on socket command (movement/attack), update game state
+        // socket.on('keydown', function(key) {
+        //   if (!p) return;
 
-          if (key == 32 || key == 90) {
-            p.a = 1;
-            return p.a;
-          }
-          if (key > 36 && key < 41) {
+        //   if (key == 32 || key == 90) {
+        //     p.a = 1;
+        //     return p.a;
+        //   }
+        //   if (key > 36 && key < 41) {
 
-            // remove key if was in list before
-            if (p.k.indexOf(key) != -1) p.k.splice(p.k.indexOf(key), 1);
+        //     // remove key if was in list before
+        //     if (p.k.indexOf(key) != -1) p.k.splice(p.k.indexOf(key), 1);
 
-            // set key to first position
-            p.k.unshift(key);
-          }
-        });
-        socket.on('keyup', function(key) {
-          if (!p) return;
-          p.k.splice(p.k.indexOf(key), 1);
-        });
+        //     // set key to first position
+        //     p.k.unshift(key);
+        //   }
+        // });
+        // socket.on('keyup', function(key) {
+        //   if (!p) return;
+        //   p.k.splice(p.k.indexOf(key), 1);
+        // });
 
         // chat
         socket.on('chat', function(msg) {
@@ -204,13 +204,13 @@ function setupGame(io, done){
      * @return {[type]}       [description]
      */
     return function physics(frame) {
-      var players = arena.players
-      var bullets = arena.bullets
-      var items = arena.items
-      var arenaClone = clone(arena)
+      var players = arena.players;
+      var bullets = arena.bullets;
+      var items = arena.items;
+      var arenaClone = clone(arena);
 
       // dir: [delta x, delta y]
-      var sqrt2 = Math.sqrt(2)
+      var sqrt2 = Math.sqrt(2);
       var keymap = {
         0: [-2, 0], // left
         1: [-sqrt2, -sqrt2], // up/left
@@ -220,200 +220,203 @@ function setupGame(io, done){
         5: [sqrt2, sqrt2], // down/right
         6: [0, 2], // down
         7: [-sqrt2, sqrt2] // down/left
-      }
+      };
 
       // player movement
       for (var i = 0; i < players.length; i++) {
-        var player = players[i]
+        var player = players[i];
         var key;
-        var key1 = (player.k[0] || -1) - 37
-        var key2 = (player.k[1] || -1) - 37
-        if (!keymap[key2]) key = key1 * 2
+        var key1 = (player.keys[0] || -1) - 37;
+        var key2 = (player.keys[1] || -1) - 37;
+        if (!keymap[key2]) {
+          key = key1 * 2;
+        }
         else {
           // adding works for up/left, up/right, down/right
           // does not work for opposite or down/left
 
           // opposite
           if ((key1 - key2) % 2 == 0) {
-            key = -1
-          } else if (key1 == 0 && key2 == 3 || key1 == 3 && key2 == 0) {
+            key = -1;
+          }
+          else if (key1 == 0 && key2 == 3 || key1 == 3 && key2 == 0) {
             // down/left
-            key = 7
+            key = 7;
           } else {
-            key = key1 + key2
+            key = key1 + key2;
           }
         }
 
-        if (player.a) {
+        if (player.attacking) {
           if (frame % 3 == 0) {
             // maybe remove an attack frame
-            if (player.f == 3) {
-              player.f++;
-              player.a = (player.a + 1) % 5
-            } else if (player.f == 4) {
+            if (player.frame == 3) {
+              player.frame++;
+              player.attacking = (player.attacking + 1) % 5;
+            } else if (player.frame == 4) {
               // here is where we check for hit (if melee weapon)
-              if (player.w < 1) {
+              if (player.weapon < 1) {
                 var weapon = {
-                  x: player.x + keymap[player.d][0] * 5,
-                  y: player.y + keymap[player.d][1] * 5
-                }
-                var hit = collide(weapon, players.slice(0, i).concat(players.slice(i + 1)))
+                  x: player.x + keymap[player.direction][0] * 5,
+                  y: player.y + keymap[player.direction][1] * 5
+                };
+                var hit = CollisionService.hasCollision(weapon, players.slice(0, i).concat(players.slice(i + 1)));
                 if (hit) {
-                  hit.h -= 10
+                  hit.h -= 10;
                   if (hit.h <= 0) {
-                    player.s++
+                    player.kills++;
                   }
                 }
               } else {
-                var bullet = new Bullet(player.w - 1, player.x, player.y, player.d, player.n)
-                arena.bullets.push(bullet)
-                diff[3].push(bullet)
-                arenaClone.bullets.push(bullet)
+                var bullet = new Bullet(player.weapon - 1, player.x, player.y, player.direction, player.name);
+                arena.bullets.push(bullet);
+                diff[3].push(bullet);
+                arenaClone.bullets.push(bullet);
               }
-              player.f++;
-              player.a = (player.a + 1) % 5
+              player.frame++;
+              player.attacking = (player.attacking + 1) % 5;
             } else {
-              player.f = 3
-              player.a = (player.a + 1) % 5
+              player.frame = 3;
+              player.attacking = (player.attacking + 1) % 5;
             }
           }
         } else if (keymap[key]) {
           if (frame % 6 == 0) {
-            player.f = (player.f + 1) % 4
+            player.frame = (player.frame + 1) % 4;
           }
-          player.x += keymap[key][0]
-          player.y += keymap[key][1]
-          var outsideMap = player.x < -400 || player.x > (400 - 16) || player.y < -300 || player.y > (300 - 18)
-          var collidePlayer = collide(player, players.slice(0, i).concat(players.slice(i + 1)))
-          var collideTerrain = CollisionService.hasTerrainCollision(arena.tiles, player.x, player.y)
+          player.x += keymap[key][0];
+          player.y += keymap[key][1];
+          var outsideMap = player.x < -400 || player.x > (400 - 16) || player.y < -300 || player.y > (300 - 18);
+          var collidePlayer = CollisionService.hasCollision(player, players.slice(0, i).concat(players.slice(i + 1)));
+          var collideTerrain = CollisionService.hasTerrainCollision(arena.tiles, player.x, player.y);
           if (outsideMap || collidePlayer || collideTerrain) {
-            player.x -= keymap[key][0]
-            player.y -= keymap[key][1]
+            player.x -= keymap[key][0];
+            player.y -= keymap[key][1];
           }
-          player.d = key;
+          player.direction = key;
         } else {
-          player.f = 1
+          player.frame = 1;
         }
       }
 
       // bullet movement/collision
       for (var i = bullets.length - 1; i >= 0; i--) {
-        var bullet = bullets[i]
-        bullet.x += keymap[bullet.d][0] * 2
-        bullet.y += keymap[bullet.d][1] * 2
-        var player = collide(bullet, players)
-        if (player && bullet.n != player.n) {
+        var bullet = bullets[i];
+        bullet.x += keymap[bullet.d][0] * 2;
+        bullet.y += keymap[bullet.d][1] * 2;
+        var player = CollisionService.hasCollision(bullet, players);
+        if (player && bullet.n != player.name) {
           // arrow does 10 dmg, bullet does 20
-          player.h -= bullet.t == 0 ? 10 : 20
+          player.h -= (bullet.t == 0) ? 10 : 20;
           if (player.h <= 0) {
-            var id = bullet.n
+            var id = bullet.n;
             for (var i = 0; i < players.length; i++) {
               if (players[i].n == id) {
-                players[i].s++
-                break
+                players[i].s++;
+                break;
               }
             }
           }
 
-          diff[4].push(i)
-          bullets.splice(i, 1)
-          arenaClone.bullets.splice(i, 1)
+          diff[4].push(i);
+          bullets.splice(i, 1);
+          arenaClone.bullets.splice(i, 1);
         } else if (bullet.x < -400 || bullet.x > 400 || bullet.y < -300 || bullet.y > 300) {
-          diff[4].push(i)
-          bullets.splice(i, 1)
-          arenaClone.bullets.splice(i, 1)
+          diff[4].push(i);
+          bullets.splice(i, 1);
+          arenaClone.bullets.splice(i, 1);
         }
       }
 
       // player pickup items
       for (var i = items.length - 1; i >= 0; i--) {
-        var item = items[i]
-        var player = CollisionService.hasCollision(item, players)
+        var item = items[i];
+        var player = CollisionService.hasCollision(item, players);
 
         // if colliding with item, pick it up
         if (player) {
 
           // item is better than current
-          if (player.w < item.n) {
-            var weapon = item.n
+          if (player.weapon < item.n) {
+            var weapon = item.n;
 
             // pick up the item
-            if (player.w != -1) {
+            if (player.weapon != -1) {
 
               // drop current weapon
-              item.n = player.w
+              item.n = player.weapon;
             } else {
 
               // remove the item
-              items.splice(i, 1)
-              diff[7].push(i)
-              arenaClone.items.splice(i, 1)
+              items.splice(i, 1);
+              diff[7].push(i);
+              arenaClone.items.splice(i, 1);
             }
 
-            player.w = weapon
+            player.weapon = weapon;
           }
         }
       }
 
       // player deaths
       for (var i = players.length - 1; i >= 0; i--) {
-        var player = players[i]
+        var player = players[i];
         if (player.h <= 0) {
           // drop weapon
-          if (player.w != -1) {
+          if (player.weapon != -1) {
             var item = {
-              n: player.w,
+              n: player.weapon,
               x: player.x,
               y: player.y
-            }
-            items.push(item)
-            arenaClone.items.push(item)
-            diff[6].push(item)
+            };
+            items.push(item);
+            arenaClone.items.push(item);
+            diff[6].push(item);
           }
           // anounce death
-          io.sockets.emit('alert', player.n + ' has been killed')
+          io.sockets.emit('alert', player.name + ' has been killed');
 
           // update high scores
           // TODO - only send if top 10 change
           highScores.push({
-            name: player.n,
-            score: player.s * 1000
-          })
+            name: player.name,
+            score: player.kills * 1000
+          });
 
           highScores.sort(function (a, b) {
-            return -a.score + b.score
-          })
+            return -a.score + b.score;
+          });
 
           // send high score list
-          io.sockets.emit('highScores', highScores.slice(0, 10))
+          io.sockets.emit('highScores', highScores.slice(0, 10));
 
-          taken.splice(taken.indexOf(player.n), 1)
+          taken.splice(taken.indexOf(player.name), 1);
           player.isDead = true;
-          players.splice(i, 1)
-          diff[1].push(i)
-          arenaClone.players.splice(i, 1)
+          players.splice(i, 1);
+          diff[1].push(i);
+          arenaClone.players.splice(i, 1);
         }
       }
 
 
       // calculate update diffs
       // players
-      var pDiffs = differ(players, arenaClone.players)
+      var pDiffs = differ(players, arenaClone.players);
       // bullets
-      var bDiffs = differ(bullets, arenaClone.bullets)
+      var bDiffs = differ(bullets, arenaClone.bullets);
       // items
-      var iDiffs = differ(items, arenaClone.items)
+      var iDiffs = differ(items, arenaClone.items);
 
-      diff[2] = pDiffs
-      diff[5] = bDiffs
-      diff[8] = iDiffs
+      diff[2] = pDiffs;
+      diff[5] = bDiffs;
+      diff[8] = iDiffs;
 
-      var t = diff
+      var t = diff;
       diff = Array.apply([], new Array(9)).map(function () {
-        return []
-      })
+        return [];
+      });
 
-      return t
+      return t;
     };
   }
 }

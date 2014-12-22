@@ -94,7 +94,7 @@ module.exports = {
 
     // ???
     keys: {
-      type: 'array',
+      type: 'json',
       defaultsTo: []
     },
 

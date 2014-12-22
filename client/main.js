@@ -8,19 +8,35 @@ var Cloud = {
 
 
   keydown: function (keycode){
-    io.socket._raw.emit('keydown', keycode);
+    // io.socket._raw.emit('keydown', keycode);
 
-    // io.socket.post('/me/keydown', {
-    //   keycode: keycode
-    // });
+    io.socket.post('/me/keydown', {
+      keycode: keycode
+    }, function (data, jwr) {
+      if (jwr.error) {
+        console.error('ERROR:',data);
+        return;
+      }
+
+      console.log('keydown response:',data);
+      return;
+    });
   },
 
   keyup: function (keycode){
-    io.socket._raw.emit('keyup', keycode);
+    // io.socket._raw.emit('keyup', keycode);
 
-    // io.socket.post('/me/keyup', {
-    //   keycode: keycode
-    // });
+    io.socket.post('/me/keyup', {
+      keycode: keycode
+    }, function (data, jwr) {
+      if (jwr.error) {
+        console.error('ERROR:',data);
+        return;
+      }
+
+      console.log('keyup response:',data);
+      return;
+    });
   },
 
   chat: function (msg){
